@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: acme-db
+    environment:
+      POSTGRES_USER: acme_user
+      POSTGRES_PASSWORD: acme_password
+      POSTGRES_DB: acme_tasks
+    ports:
+      - "5433:5432" # <-- ¡CAMBIO AQUÍ! (Izquierda: Tu máquina, Derecha: Contenedor)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: acme-api
+    ports:
+      - "8080:8080"
+    environment:
+      # Tu cadena de conexión original y correcta:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=acme_tasks;Username=acme_user;Password=acme_password
+      # Agregamos las variables para el JWT:
+      - JwtSettings__Secret=AstoStudio_ACME_Super_Secret_Key_2026_Fullstack!!
+      - JwtSettings__Issuer=AcmeTaskApi
+      - JwtSettings__Audience=AcmeTaskClient
+    depends_on:
+      - db
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: acme-web
+    ports:
+      - "4200:80" # Mapeamos el puerto 4200 local al 80 del Nginx
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

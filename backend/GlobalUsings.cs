@@ -1,0 +1,1 @@
+global using TaskStatus = AcmeTaskApi.Domain.Enums.TaskStatus;
